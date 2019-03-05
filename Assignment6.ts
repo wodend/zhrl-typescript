@@ -119,7 +119,7 @@ function envLookup(e: Env, s: string): Value {
             return e[i].val;
         }
     }
-    console.error("ZHRL: name not found in environment");
+    throw "ZHRL: name not found in environment";
 }
 
 // A version of racket's addition, Consuming two Value's and returning a Value
@@ -127,7 +127,7 @@ function myPlus(args: Value[]): Value {
     if (args.length == 2 && args[0] instanceof numV && args[1] instanceof numV) {
         return new numV((args[0] as numV).n + (args[1] as numV).n);
     }
-    console.error("ZHRL: primative operator + arity or called on non-number values")
+    throw "ZHRL: primative operator + arity or called on non-number values";
 }
 
 // A version of racket's subtraction, Consuming two Value's and returning a Value
@@ -135,7 +135,7 @@ function mySubtract(args: Value[]): Value {
     if (args.length == 2 && args[0] instanceof numV && args[1] instanceof numV) {
         return new numV((args[0] as numV).n - (args[1] as numV).n);
     }
-    console.error("ZHRL: primative operator - arity or called on non-number values")
+    throw "ZHRL: primative operator - arity or called on non-number values";
 }
 
 // A version of racket's multiplication, Consuming two Value's and returning a Value
@@ -143,7 +143,7 @@ function myMultiply(args: Value[]): Value {
     if (args.length == 2 && args[0] instanceof numV && args[1] instanceof numV) {
         return new numV((args[0] as numV).n * (args[1] as numV).n);
     }
-    console.error("ZHRL: primative operator * arity or called on non-number values")
+    throw "ZHRL: primative operator * arity or called on non-number values";
 }
 
 // A version of racket's division, Consuming two Value's and returning a Value
@@ -156,7 +156,7 @@ function myDivide(args: Value[]): Value {
             return new numV((args[0] as numV).n / (args[1] as numV).n);
         }
     }
-    console.error("ZHRL: primative operator + arity or called on non-number values")
+    throw "ZHRL: primative operator + arity or called on non-number values";
 }
 
 // A version of racket's <=, Consuming two Value's and returning a Value
@@ -164,7 +164,7 @@ function myLessThanOrEqualTo(args: Value[]): Value {
     if (args.length == 2 && args[0] instanceof numV && args[1] instanceof numV) {
         return new boolV((args[0] as numV).n <= (args[1] as numV).n);
     }
-    console.error("ZHRL: primative operator <= arity or called on non-number values")
+    throw "ZHRL: primative operator <= arity or called on non-number values";
 }
 
 // A version of racket's multiplication, Consuming two Value's and returning a Value
@@ -196,7 +196,7 @@ function parse(s: string) : ExprC {
         }
         else if ((s.charAt(0) != '"') || s.charAt(s.length - 1) != '"') {
             if (s == "var" || s == "if" || s == "lam" || s == "=") {
-                console.error("ZHRL: wrongly formatted expression");
+                throw "ZHRL: wrongly formatted expression";
             }
             else {
                 return new idC(s);
@@ -207,9 +207,9 @@ function parse(s: string) : ExprC {
         }
     }
     else {
-
+        
     }
     
 }
 
-console.log(parse('"lol"'));
+console.log(parse('9'));

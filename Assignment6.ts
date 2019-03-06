@@ -305,7 +305,7 @@ function parseSymbol(s: string): string {
 // console.log(parse(['f', '"lol"', 'x', 9]));
 
 // console.log(topParse('{var {x = 15} {z = 14} {+ x z}}'));
-// console.log(parse(['var', ['x', '=', 15], ['z', '=', 14], ['+', 'x', 'z']]));
+console.log(parse(['var', ['x', '=', 15], ['z', '=', 14], ['+', 'x', 'z']]));
 
 // console.log(topParse('{lam {x y} {+ x y}}'));
 console.log(parse(['lam', ['x', 'y'], ['+', 'x', 'y']]));

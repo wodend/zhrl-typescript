@@ -56,7 +56,7 @@ function arraysEqual(a, b) {
         return false;
     }
     for (var i = 0; i < a.length; ++i) {
-        if (a[i] !== b[i]) {
+        if (!a[i].equals(b[i])) {
             return false;
         }
     }
@@ -72,7 +72,7 @@ class appC {
     }
     equals(other: ExprC) {
         if (other instanceof appC) {
-            return (this.fun === other.fun)
+            return (this.fun.equals(other.fun))
                 && arraysEqual(this.args, other.args);
         }
         else {
@@ -437,6 +437,9 @@ console.log((top_interp(['var', ['x', '=', 15], ['z', '=', 14],
     ['+', 'x', 'z']]) as numV).equals(new numV(29)));
 console.log(parse(0).equals(new numC(0)));
 console.log(parse('"a"').equals(new strC("a")));
+console.log(parse("a").equals(new idC("a")));
+console.log(parse(["+", 0, 1])
+    .equals(new appC(new idC("+"), [new numC(0), new numC(1)])));
 
 console.log((interp(new numC(0), topEnv) as numV).equals(new numV(0)));
 console.log((interp(new strC("a"), topEnv) as strV).equals(new strV("a")));

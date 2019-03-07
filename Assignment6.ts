@@ -189,27 +189,129 @@ new Binding('equal?', new primV(myEqual))];
 
 // The Parser
 
-function parse(s: string) : ExprC {
-    if (s.length > 0 && s.charAt(0) != '{') {
-        if (parseInt(s) == 0 || parseInt(s) > 0 || parseInt(s) < 0) {
-            return new numC(parseInt(s));
-        }
-        else if ((s.charAt(0) != '"') || s.charAt(s.length - 1) != '"') {
-            if (s == "var" || s == "if" || s == "lam" || s == "=") {
-                throw "ZHRL: wrongly formatted expression";
-            }
-            else {
-                return new idC(s);
-            }
+function topParse(s: string): any {
+    var currentOpenCurly = s.indexOf("{");
+    if (currentOpenCurly < 0) {
+        return s
+    }
+    var bigArr: any[] = [];
+    var currentClosingCurly = s.indexOf("}");
+    var nextOpeningCurly = s.indexOf("{", currentOpenCurly + 1);
+    if (nextOpeningCurly > 0 && currentClosingCurly > nextOpeningCurly) {
+        bigArr.push(topParse(s.substring(currentOpenCurly + 1, nextOpeningCurly - 1)));
+
+        bigArr.concat(topParse(s.substring(nextOpeningCurly, s.length)));
+
+        return bigArr;
+    }
+    else {
+        bigArr = s.substring(currentOpenCurly + 1, currentClosingCurly).split(" ").map(topParse);
+        return bigArr;
+    }
+    // var currentSpace = s.indexOf(" ");
+    // var currentStr = s.substring(currentOpenCurly + 1, currentSpace);
+    
+}
+
+function parse(s: any): ExprC {
+    if (typeof s === "number") {
+        return new numC(s);
+    }
+    if (typeof s === "string") {
+        if ((s.charAt(0) != '"') || s.charAt(s.length - 1) != '"') {
+            return new idC(parseSymbol(s));
         }
         else {
             return new strC(s.substring(1, s.length - 1));
         }
     }
-    else {
-        
+    if (typeof s === "object") {
+        if (s.length > 0) {
+            if (s[0] == "if") {
+                if (s.length == 4) {
+                    return new condC(parse(s[1]), parse(s[2]), parse(s[3]));
+                }
+                else {
+                    throw "ZHRL: wrongly formatted if expression";
+                }
+            }
+            else if (s[0] == "var") {
+                if (s.length > 1) {
+                    return desugarVar(s);
+                }
+                else {
+                    throw "ZHRL: wrongly formatted var expression";
+                }
+            }
+            else if (s[0] == "lam") {
+                if (s.length == 3) {
+                    if (!hasDups(s[1])) {
+                        return new lamC(s[1].map(parseSymbol), parse(s[2])); // could have numbers and dups passed into s[1]
+                    }
+                    else {
+                        throw "ZHRL: lambda expression has duplicate formal parameters present";
+                    }
+                }
+                else {
+                    throw "ZHRL: wrongly formatted lambda expression";
+                }
+            }
+            else {
+                return new appC(parse(s[0]), s.slice(1, s.length).map(parse));
+            }
+        }
     }
-    
+    else {
+        throw "ZHRL: wrongly formatted expression";
+    }
 }
 
-console.log(parse('9'));
+function desugarVar(s: any[]): ExprC {
+    var ids: any[] = [];
+    var assignments: any[] = [];
+    for (var i = 1; i < s.length - 1; i++) {
+        if (s[i].length == 3 && s[i][1] == "=") {
+            ids.push(s[i][0]);
+            assignments.push(s[i][2]);
+        }
+        else {
+            throw "ZHRL: wrongly formatted var expression";
+        }
+    }
+    return parse([['lam', ids, s[s.length - 1]]].concat(assignments));
+}
+
+function hasDups(s: any[]) {
+    for (var i = 0; i <= s.length; i++) {
+        for (var j = i; j <= s.length; j++) {
+            if (i != j && s[i] == s[j]) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function parseSymbol(s: string): string {
+    if (s == "var" || s == "if" || s == "lam" || s == "=" || typeof s != "string") {
+        throw "ZHRL: wrongly formatted symbol";
+    }
+    else {
+        return s;
+    }
+}
+
+// console.log(topParse('{f "lol" x 9}'));
+// console.log(parse(['f', '"lol"', 'x', 9]));
+
+// console.log(topParse('{var {x = 15} {z = 14} {+ x z}}'));
+console.log(parse(['var', ['x', '=', 15], ['z', '=', 14], ['+', 'x', 'z']]));
+
+// console.log(topParse('{lam {x y} {+ x y}}'));
+console.log(parse(['lam', ['x', 'y'], ['+', 'x', 'y']]));
+
+// console.log(topParse('{+ x y}'));
+// console.log(parse(['+', 'x', 'y']));
+
+// console.log(topParse('lol'));
+// console.log(parse('lol'));

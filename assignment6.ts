@@ -11,12 +11,28 @@ class numC {
     constructor(n: number) {
         this.n = n;
     }
+    equals(other: ExprC) {
+        if (other instanceof numC) {
+            return this.n === other.n;
+        }
+        else {
+            return false;
+        }
+    }
 }
 
 class strC {
     str: string;
     constructor(str: string) {
         this.str = str;
+    }
+    equals(other: ExprC) {
+        if (other instanceof strC) {
+            return this.str === other.str;
+        }
+        else {
+            return false;
+        }
     }
 }
 
@@ -25,6 +41,26 @@ class idC {
     constructor(s: string) {
         this.s = s;
     }
+    equals(other: ExprC) {
+        if (other instanceof idC) {
+            return this.s === other.s;
+        }
+        else {
+            return false;
+        }
+    }
+}
+
+function arraysEqual(a, b) {
+    if (a.length != b.length) {
+        return false;
+    }
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 class appC {
@@ -33,6 +69,15 @@ class appC {
     constructor(fun: ExprC, args: ExprC[]) {
         this.fun = fun;
         this.args = args;
+    }
+    equals(other: ExprC) {
+        if (other instanceof appC) {
+            return (this.fun === other.fun)
+                && arraysEqual(this.args, other.args);
+        }
+        else {
+            return false;
+        }
     }
 }
 
@@ -45,6 +90,16 @@ class condC {
         this.then = then;
         this.els = els;
     }
+    equals(other: ExprC) {
+        if (other instanceof condC) {
+            return (this.test === other.test)
+                && (this.then === other.then)
+                && (this.els === other.els);
+        }
+        else {
+            return false;
+        }
+    }
 }
 
 class lamC {
@@ -53,6 +108,15 @@ class lamC {
     constructor(args: string[], body: ExprC) {
         this.args = args;
         this.body = body;
+    }
+    equals(other: ExprC) {
+        if (other instanceof lamC) {
+            return (this.body === other.body)
+                && arraysEqual(this.args, other.args);
+        }
+        else {
+            return false;
+        }
     }
 }
 
@@ -255,17 +319,6 @@ function interp(expression: ExprC, environment: Env): Value {
     }
 }
 
-console.log((interp(new numC(0), topEnv) as numV).equals(new numV(0)));
-console.log((interp(new strC("a"), topEnv) as strV).equals(new strV("a")));
-console.log((interp(new idC("true"), topEnv) as boolV)
-    .equals(new boolV(true)));
-console.log((interp(new appC(new lamC(["x"],
-    new appC(new idC("+"), [new idC("x"), new numC(1)])), [new numC(0)]),
-    topEnv) as numV).equals(new numV(1)));
-console.log((interp(new condC(new idC("true"), new numC(1), new numC(0)),
-    topEnv) as numV).equals(new numV(1)));
-
-
 // The Parser
 function topParse(s: string): any {
     var currentOpenCurly = s.indexOf("{");
@@ -379,19 +432,19 @@ function parseSymbol(s: string): string {
     }
 }
 
-// console.log(topParse('{f "lol" x 9}'));
-// console.log(parse(['f', '"lol"', 'x', 9]));
+// Tests
 console.log((top_interp(['var', ['x', '=', 15], ['z', '=', 14],
     ['+', 'x', 'z']]) as numV).equals(new numV(29)));
+console.log(parse(0).equals(new numC(0)));
+console.log(parse('"a"').equals(new strC("a")));
 
-// console.log(topParse('{var {x = 15} {z = 14} {+ x z}}'));
-console.log(parse(['var', ['x', '=', 15], ['z', '=', 14], ['+', 'x', 'z']]));
+console.log((interp(new numC(0), topEnv) as numV).equals(new numV(0)));
+console.log((interp(new strC("a"), topEnv) as strV).equals(new strV("a")));
+console.log((interp(new idC("true"), topEnv) as boolV)
+    .equals(new boolV(true)));
+console.log((interp(new appC(new lamC(["x"],
+    new appC(new idC("+"), [new idC("x"), new numC(1)])), [new numC(0)]),
+    topEnv) as numV).equals(new numV(1)));
+console.log((interp(new condC(new idC("true"), new numC(1), new numC(0)),
+    topEnv) as numV).equals(new numV(1)));
 
-// console.log(topParse('{lam {x y} {+ x y}}'));
-console.log(parse(['lam', ['x', 'y'], ['+', 'x', 'y']]));
-
-// console.log(topParse('{+ x y}'));
-// console.log(parse(['+', 'x', 'y']));
-
-// console.log(topParse('lol'));
-// console.log(parse('lol'));

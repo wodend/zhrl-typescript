@@ -80,9 +80,11 @@ class lamC {
 class cloV {
     params: string[];
     body: ExprC;
-    constructor(params: string[], body: ExprC) {
+    environment: Env;
+    constructor(params: string[], body: ExprC, env: Env) {
         this.params = params;
         this.body = body;
+        this.environment = env;
     }
 }
 
@@ -186,6 +188,38 @@ new Binding('false', new boolV(false)),
 new Binding('<=', new primV(myLessThanOrEqualTo)),
 new Binding('equal?', new primV(myEqual))];
 
+//class numC {
+//    n: number;
+//class numV {
+//    n: number;
+//class strC {
+//    str: string;
+//class strV {
+//    str: string;
+//class idC {
+//    s: string;
+//class appC {
+//    fun: ExprC;
+//    args: ExprC[];
+//class condC {
+//    test: ExprC;
+//    then: ExprC;
+//    els: ExprC;
+//class boolV {
+//    val: boolean;
+//class lamC {
+//    args: string[];
+//    body: ExprC;
+//class cloV {
+//    params: string[];
+//    body: ExprC;
+//    environment: Env;
+//class primV {
+//    op: (args: Value[]) => Value;
+//class Binding {
+//    name: string;
+//    val: Value;
+
 function interp(expression: ExprC, environment: Env): Value {
     console.log(expression.constructor === numC);
     switch (expression.constructor) {
@@ -195,6 +229,26 @@ function interp(expression: ExprC, environment: Env): Value {
             return new strV((expression as strC).str);
         case idC:
             return envLookup(environment, (expression as idC).s);
+        case lamC:
+            let parameters = (expression as lamC).args;
+            let body = (expression as lamC).body;
+            return new cloV(parameters, body, environment);
+        case appC:
+            let fun = interp((expression as appC).fun, environment);
+            let args = (expression as appC).args.map(
+                function(x: ExprC): Value {
+                    return interp(x, environment);
+                });
+            switch (fun.constructor) {
+                case primV:
+                    return (fun as primV).op(args);
+                case cloV:
+                    let closure = envExtends((fun as cloV).environment,
+                        (fun as cloV).params, args);
+                    return interp((fun as cloV).body, closure);
+                default:
+                    throw "ZHRL: application of a non-closure";
+            }
         default:
             throw "ZHRL: malformed abstract syntax tree";
     }
@@ -203,6 +257,12 @@ function interp(expression: ExprC, environment: Env): Value {
 console.log(interp(new numC(0), topEnv));
 console.log(interp(new strC("a"), topEnv));
 console.log(interp(new idC("true"), topEnv));
+console.log(interp(new appC(new idC("+"), [new numC(0), new numC(1)]),
+    topEnv));
+console.log(interp(new appC(new lamC(["x"],
+        new appC(new idC("+"), [new idC("x"), new numC(1)])),
+        [new numC(0)]),
+    topEnv));
 
 
 // The Parser

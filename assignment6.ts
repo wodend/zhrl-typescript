@@ -13,21 +13,7 @@ class numC {
     }
 }
 
-class numV {
-    n: number;
-    constructor(n: number) {
-        this.n = n;
-    }
-}
-
 class strC {
-    str: string;
-    constructor(str: string) {
-        this.str = str;
-    }
-}
-
-class strV {
     str: string;
     constructor(str: string) {
         this.str = str;
@@ -61,19 +47,42 @@ class condC {
     }
 }
 
-class boolV {
-    val: boolean;
-    constructor(val: boolean) {
-        this.val = val;
-    }
-}
-
 class lamC {
     args: string[];
     body: ExprC;
     constructor(args: string[], body: ExprC) {
         this.args = args;
         this.body = body;
+    }
+}
+
+class numV {
+    n: number;
+    constructor(n: number) {
+        this.n = n;
+    }
+    equals(other: numV) {
+        return this.n === other.n;
+    }
+}
+
+class strV {
+    str: string;
+    constructor(str: string) {
+        this.str = str;
+    }
+    equals(other: strV) {
+        return this.str === other.str;
+    }
+}
+
+class boolV {
+    val: boolean;
+    constructor(val: boolean) {
+        this.val = val;
+    }
+    equals(other: boolV) {
+        return this.val === other.val;
     }
 }
 
@@ -86,12 +95,18 @@ class cloV {
         this.body = body;
         this.environment = env;
     }
+    equals(other: cloV) {
+        return false;
+    }
 }
 
 class primV {
     op: (args: Value[]) => Value;
     constructor(op: (args: Value[]) => Value) {
         this.op = op;
+    }
+    equals(other: primV) {
+        return false;
     }
 }
 
@@ -188,6 +203,11 @@ new Binding('false', new boolV(false)),
 new Binding('<=', new primV(myLessThanOrEqualTo)),
 new Binding('equal?', new primV(myEqual))];
 
+// parse and interpret ZHRL concrete syntax
+function top_interp(s: any): Value {
+    return interp(parse(s), topEnv);
+}
+
 // interpret ZHRL abstract syntax
 function interp(expression: ExprC, environment: Env): Value {
     switch (expression.constructor) {
@@ -235,21 +255,15 @@ function interp(expression: ExprC, environment: Env): Value {
     }
 }
 
-console.log(interp(new numC(0), topEnv));
-console.log(interp(new strC("a"), topEnv));
-console.log(interp(new idC("true"), topEnv));
-console.log(interp(new appC(new idC("+"), [new numC(0), new numC(1)]),
-    topEnv));
-console.log(interp(new appC(new lamC(["x"],
-        new appC(new idC("+"), [new idC("x"), new numC(1)])),
-        [new numC(0)]),
-    topEnv));
-console.log(interp(new appC(new lamC(["x"],
-        new appC(new idC("+"), [new idC("x"), new numC(1)])),
-        [new numC(0)]),
-    topEnv));
-console.log(interp(new condC(new idC("true"), new numC(1), new numC(0)),
-    topEnv));
+console.log((interp(new numC(0), topEnv) as numV).equals(new numV(0)));
+console.log((interp(new strC("a"), topEnv) as strV).equals(new strV("a")));
+console.log((interp(new idC("true"), topEnv) as boolV)
+    .equals(new boolV(true)));
+console.log((interp(new appC(new lamC(["x"],
+    new appC(new idC("+"), [new idC("x"), new numC(1)])), [new numC(0)]),
+    topEnv) as numV).equals(new numV(1)));
+console.log((interp(new condC(new idC("true"), new numC(1), new numC(0)),
+    topEnv) as numV).equals(new numV(1)));
 
 
 // The Parser
@@ -367,6 +381,8 @@ function parseSymbol(s: string): string {
 
 // console.log(topParse('{f "lol" x 9}'));
 // console.log(parse(['f', '"lol"', 'x', 9]));
+console.log((top_interp(['var', ['x', '=', 15], ['z', '=', 14],
+    ['+', 'x', 'z']]) as numV).equals(new numV(29)));
 
 // console.log(topParse('{var {x = 15} {z = 14} {+ x z}}'));
 console.log(parse(['var', ['x', '=', 15], ['z', '=', 14], ['+', 'x', 'z']]));

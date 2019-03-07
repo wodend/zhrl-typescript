@@ -175,3 +175,17 @@ function parse(s) {
     }
 }
 console.log(parse('9'));
+function interp(expression, environment) {
+    console.log(expression.constructor === numC);
+    switch (expression.constructor) {
+        case numC:
+            return new numV(expression.n);
+        case strC:
+            return new strV(expression.str);
+        case idC:
+            return envLookup(environment, expression.s);
+        default:
+            throw "ZHRL: malformed abstract syntax tree";
+    }
+}
+console.log(interp(new idC("true"), topEnv));

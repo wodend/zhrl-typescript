@@ -177,7 +177,7 @@ function myEqual(args: Value[]): Value {
 }
 
 // Our top env
-var topEnv: Binding[] = [new Binding('+', new primV(myPlus)),
+var topEnv: Env = [new Binding('+', new primV(myPlus)),
 new Binding('-', new primV(mySubtract)),
 new Binding('*', new primV(myMultiply)),
 new Binding('/', new primV(myDivide)),
@@ -213,3 +213,19 @@ function parse(s: string) : ExprC {
 }
 
 console.log(parse('9'));
+
+function interp(expression: ExprC, environment: Env): Value {
+    console.log(expression.constructor === numC);
+    switch (expression.constructor) {
+        case numC:
+            return new numV((expression as numC).n);
+        case strC:
+            return new strV((expression as strC).str);
+        case idC:
+            return envLookup(environment, (expression as idC).s);
+        default:
+            throw "ZHRL: malformed abstract syntax tree";
+    }
+}
+
+console.log(interp(new idC("true"), topEnv));

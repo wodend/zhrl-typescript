@@ -188,40 +188,8 @@ new Binding('false', new boolV(false)),
 new Binding('<=', new primV(myLessThanOrEqualTo)),
 new Binding('equal?', new primV(myEqual))];
 
-//class numC {
-//    n: number;
-//class numV {
-//    n: number;
-//class strC {
-//    str: string;
-//class strV {
-//    str: string;
-//class idC {
-//    s: string;
-//class appC {
-//    fun: ExprC;
-//    args: ExprC[];
-//class condC {
-//    test: ExprC;
-//    then: ExprC;
-//    els: ExprC;
-//class boolV {
-//    val: boolean;
-//class lamC {
-//    args: string[];
-//    body: ExprC;
-//class cloV {
-//    params: string[];
-//    body: ExprC;
-//    environment: Env;
-//class primV {
-//    op: (args: Value[]) => Value;
-//class Binding {
-//    name: string;
-//    val: Value;
-
+// interpret ZHRL abstract syntax
 function interp(expression: ExprC, environment: Env): Value {
-    console.log(expression.constructor === numC);
     switch (expression.constructor) {
         case numC:
             return new numV((expression as numC).n);
@@ -229,6 +197,19 @@ function interp(expression: ExprC, environment: Env): Value {
             return new strV((expression as strC).str);
         case idC:
             return envLookup(environment, (expression as idC).s);
+        case condC:
+            let test = interp((expression as condC).test, environment);
+            if (test instanceof boolV) {
+                if (test.val) {
+                    return interp((expression as condC).then, environment);
+                }
+                else {
+                    return interp((expression as condC).els, environment);
+                }
+            }
+            else {
+                throw "ZHRL: test clause is not a boolean"
+            }
         case lamC:
             let parameters = (expression as lamC).args;
             let body = (expression as lamC).body;
@@ -263,10 +244,15 @@ console.log(interp(new appC(new lamC(["x"],
         new appC(new idC("+"), [new idC("x"), new numC(1)])),
         [new numC(0)]),
     topEnv));
+console.log(interp(new appC(new lamC(["x"],
+        new appC(new idC("+"), [new idC("x"), new numC(1)])),
+        [new numC(0)]),
+    topEnv));
+console.log(interp(new condC(new idC("true"), new numC(1), new numC(0)),
+    topEnv));
 
 
 // The Parser
-
 function topParse(s: string): any {
     var currentOpenCurly = s.indexOf("{");
     if (currentOpenCurly < 0) {
